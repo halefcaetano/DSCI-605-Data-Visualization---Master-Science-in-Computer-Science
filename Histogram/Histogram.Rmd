@@ -1,0 +1,78 @@
+---
+title: "HalefCaetano_GroupHistogram"
+author: "Halef Caetano"
+date: "1/13/2024"
+output: html_document
+---
+
+# Assignment Overview
+
+This lab is preconfigured to include all dependencies (libraries, packages, and datasets) you’ll need to complete
+your work in RStudio. You can practice, run test cases, and work on assignments directly from your browser,
+and your work will be stored throughout the span of the course. To get started, head to the “Files” tab in
+RStudio where you’ll find any starter files needed to complete this activity. You’ll be able to access a copy of
+these assignment instructions both in this file (Instructions.pdf) in your lab and in the document attached to
+the Step 1: Grouped Histogram in R item.
+
+
+## The basic steps should be included in this lab:
+
+1. Load the required packages in R.
+2. You’ll want to set your working directory to where you place your dataset. If you’re not sure what
+your current working directory is, you can use getwd() in your RStudio Console. Please note: Use “/”
+instead of “" in the path.
+3. Please use the data provided to conduct a “Grouped Histogram” based on the step mentioned below.
+Load and inspect the dataset.
+4. Break the variable “CrimeRate” into three groups based on the range and create a new variable
+“RangeGroup”. You can use case_then() function.
+Three groups:
+- CrimeRate < 250 ~"CrimeRate < 250"
+- CrimeRate >= 250 CrimeRate <= 500 ~ "250 <= CrimeRate <= 500",
+- CrimeRate >500 ~"CrimeRate > 500")
+5. Create two color vectors. The first color vector is obtained from colorspace::diverge_hcl() and the
+second color vector is formed by colors of “green”, “blue” and “red”.
+6. Plot a histogram of the variable “CrimeRate” and fill with the variable “Year” using the first color
+vector.
+7. Plot a histogram of the variable “CrimeRate” and fill with the variable “RangeGroup” using the second
+color vector.
+8. Please show all the code in code chunks (set echo=TRUE).
+
+
+```{r pressure, echo=TRUE}
+
+> library(ggplot2)
+> library(tidyverse)
+> library(colorspace)
+> library(readr)
+> Sampledata2 <- read_csv("Module6/Sampledata2.csv")
+New names:                                                                                                                  
+ 0s• `` -> `...4`
+• `` -> `...5`
+Rows: 600 Columns: 5
+── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: ","
+chr (1): State
+dbl (2): Year, CrimeRate
+lgl (2): ...4, ...5
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> View(Sampledata2)
+> head(Sampledata2)
+# A tibble: 6 × 5
+  State    Year CrimeRate ...4  ...5 
+  <chr>   <dbl>     <dbl> <lgl> <lgl>
+1 Alabama  2007      448  NA    NA   
+2 Alabama  2008      453. NA    NA   
+3 Alabama  2009      450. NA    NA   
+4 Alabama  2010      378. NA    NA   
+5 Alabama  2011      420. NA    NA   
+6 Alabama  2012      450. NA    NA   
+> Sampledata2 <- Sampledata2 %>% mutate(RangeGroup = case_when(CrimeRate < 250 ~ "CrimeRate < 250", CrimeRate >= 250 & CrimeRate <= 500 ~ "250 <= CrimeRate <= 500", CrimeRate > 500 ~ "CrimeRate > 500"))
+> color1 <- diverge_hcl(20, palette = "Blue-Red")
+> color2 <- c("green", "blue", "red")
+> ggplot(Sampledata2, aes(x = CrimeRate, fill = Year)) + geom_histogram(binwidth = 50) + scale_fill_manual(values = color1) +labs(title = "Histogram of Crime Rate", x = "Crime Rate", y = "Frequency")
+> ggplot(Sampledata2, aes(x = CrimeRate, fill = RangeGroup)) + geom_histogram(binwidth = 50) + scale_fill_manual(values = color2) + labs(title = "Grouped Histogram of Crime Rate", x = "Crime Rate", y = "Frequency")
+
+```
+
