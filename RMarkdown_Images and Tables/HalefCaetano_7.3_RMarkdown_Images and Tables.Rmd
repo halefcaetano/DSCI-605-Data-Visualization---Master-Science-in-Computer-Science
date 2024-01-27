@@ -1,0 +1,68 @@
+---
+title: "HalefCaetano_7.3_RMarkdown_Images and Tables.RMD"
+author: "Halef Caetano"
+date: "1/14/2024"
+output: html_document
+---
+
+```{r, include = FALSE}
+install.packages(c("dplyr", "ggplot2"))
+install.packages("readr")
+library(knitr)
+library(readr)
+library(dplyr)
+library(ggplot2)
+Sampledata2 <- read_csv("Sampledata2.csv")
+glimpse(Sampledata2)
+head <- head(Sampledata2, 10)
+summary <- Sampledata2 %>% group_by(Year) %>% summarise(Mean_CrimeRate = mean(CrimeRate), Max_CrimeRate = max(CrimeRate), Min_CrimeRate = min(CrimeRate))
+histogram <- ggplot(Sampledata2, aes(x = CrimeRate, fill = as.factor(Year))) + geom_histogram(position = "dodge", bins = 30, alpha = 0.7) + labs(title = "Histogram of Crime Rate by Year", x = "Crime Rate", y = "Frequency", fill = "Year") + theme_minimal() + theme(legend.position = "right")
+scatter <- ggplot(summary, aes(x = Year, y = Mean_CrimeRate)) + geom_point() + geom_line(aes(group = 1, y = Mean_CrimeRate), color = "blue") + labs(title = "Scatter Plot of Crime Rate over Years with Average", x = "Year", y = "Crime Rate") + theme_minimal()
+
+```
+
+# 1.1 Create Tables
+
+## *Original data 
+
+In Table 1.1, we see the first 10 rows of the Crmate Rate data”.
+
+
+
+```{r, echo=FALSE}
+kable(head[1:10, ], caption="Table 1.1: The first 10 rows of the Crmate Rate data")
+```
+
+## *Satics data
+
+In Table 1.2, we see the basic statistical values of crime rates over USA for each year.
+
+Table 1.2: A Statistics table
+
+```{r echo=FALSE}
+kable(summary[1:12, ], caption="Table 1.2: A Statistics table")
+```
+
+# 1.2 Create plots
+
+## *A histogram plot
+
+In Figure 1.1, we can see the grouped histogram for each year.
+
+```{r echo=FALSE}
+print(histogram)
+```
+
+Figure 1.1: A histogram of Crime Rate over USA
+
+## *A scatter plot
+
+In Figure 1.2, we can see the average crime rate changes along with years.
+
+```{r echo=FALSE}
+print(scatter)
+```
+
+Figure 1.2: A scatter plot between Crime Rate with Year
+
+
