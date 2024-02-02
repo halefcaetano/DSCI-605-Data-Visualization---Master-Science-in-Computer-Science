@@ -1,0 +1,18 @@
+---
+title: "Plot_ly_histogram"
+author: "Halef Caetano"
+date: "1/16/2024"
+output: html_document
+---
+
+```{r setup, echo=FALSE, message = FALSE, warning = FALSE}
+
+install.packages("plotly")
+install.packages("readxl")
+library(plotly)
+library(readxl)
+range <- read_excel("Crop_Range_GOES0901_CountJday.xlsx")
+head(data)
+str(data)
+plot_ly(range, x = ~FDCount, type = "histogram")
+```
