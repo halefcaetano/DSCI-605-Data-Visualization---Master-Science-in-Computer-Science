@@ -1,0 +1,69 @@
+title: "Spatial Mapping"
+author: "Halef Caetano"
+date: "1/22/2024"
+output: html_document
+---
+
+```{r, echo=TRUE}
+library(sf)
+library(tidyverse)
+library(ggspatial)
+library(tmap)
+library(ggsn)
+library(ggplot2)
+library(grid)
+
+state  <- st_read("tl_2019_us_state/tl_2019_us_state.shp") 
+IN = state[state$STUSPS== "IN",]
+watershed <- st_read("Watersheds_HUC08_2009/WATERSHEDS_HUC08_2009_USDA_IN.shp")
+place <- st_read("tl_2016_18_place/tl_2016_18_place.shp")
+
+Somecities <- place%>% filter(NAME=="Muncie"|NAME=="Carmel")
+
+```
+
+# 0.2 A basic spatial map like this one
+
+```{r, echo=TRUE}
+ggplot() +
+  geom_sf(data=IN)+
+  geom_sf(data=watershed, alpha = 0) +
+  geom_sf(data=place, alpha = 0) +
+  xlab("Longitude") + ylab("Latitude") +
+  ggtitle("Indiana map", subtitle = paste0("(",length(unique(place$NAME)), " places)"))
+
+```
+
+
+# 0.3 A professional spatial map like this one
+
+```{r, echo=TRUE}
+ggplot(data=IN) + 
+  geom_sf(data=watershed, aes(fill=REGION)) +
+  scale_fill_manual(values = c("Region1" = "red", "Region2" = "blue")) +
+  guides(fill=guide_legend(title="Watershed Regions")) +
+  geom_sf(data=IN, linewidth=1, alpha = 0, aes(color="A"), show.legend = "polygon") + 
+  geom_sf(data=watershed, alpha = 0, aes(color="B"), show.legend = "polygon") +
+  scale_color_manual(values = c("A" = "red", "B" = "black"),
+                     labels = c("Indiana", "Watershed"),
+                     name = "") +
+  geom_sf(data=Somecities, aes(fill = as.factor(NAME))) +
+  scale_fill_manual(values = c("Region1" = "red", "Region2" = "blue", "Region3" = "green", "Region4" = "yellow", "Region5" = "purple")) +
+  theme(legend.position="right",  
+        plot.title = element_text(hjust = 0.5,
+                                  color = "Gray40",
+                                  size = 16,
+                                  face = "bold"),
+        plot.subtitle = element_text(color = "blue"),
+        plot.caption = element_text(color = "Gray60")) +
+  guides(fill=guide_legend(title="Cities")) +
+  ggsn::scalebar(data = IN, dist = 150, dist_unit = "km", location = "bottomleft", transform = TRUE, model = "WGS84") +
+  ggspatial::annotation_north_arrow(location = "br", which_north = "true", style = north_arrow_fancy_orienteering) +
+  coord_sf(xlim = c(-89, -83), ylim = c(37, 43)) +
+  theme(text = element_text(size = 20)) +
+  xlab("Longitude") + ylab("Latitude") +
+  ggtitle("Map of Indiana Watershed and Major Cities", 
+          subtitle = paste0("(", length(unique(Somecities$NAME)), " cities selected)"))
+
+
+```
