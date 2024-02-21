@@ -1,0 +1,50 @@
+---
+title: "HalefCaetano_Multiple-view layout.Rmd”"
+author: "Halef Caetano"
+date: "1/15/2024"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r, include=FALSE}
+install.packages(c("readxl", "dplyr", "ggplot2", "gridExtra"))
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+data <- read_excel("Sampledata2.xlsx")
+average_crimerate <- data %>% group_by(Year) %>% summarise(avg_Crimerate = mean(CrimeRate))
+head(data)
+histogram_plot <- ggplot(data, aes(x = CrimeRate, fill = as.factor(Year))) + geom_histogram(position = "dodge", alpha = 0.7, bins = 30) + labs(title = "Grouped Histogram of CrimeRate", x = "CrimeRate", y = "Frequency") + theme_minimal() + theme(legend.position = "right")
+scatter <- ggplot(average_crimerate, aes(x = Year, y = avg_Crimerate)) + geom_point() + geom_line(aes(group = 1, y = avg_Crimerate), color = "blue") labs(title = "Scatter Plot of Year vs. Average Crimerate with Trend Line", x = "Year", y = "Average Crimerate") + theme_minimal()
+box_plot <- ggplot(data, aes(x = as.factor(Year), y = CrimeRate, fill = as.factor(Year))) + geom_boxplot() + labs(title = "Grouped Box Plot of Crimerate by Year", x = "Year", y = "Crimerate") + theme_minimal() + theme(legend.position = "none")
+```
+
+# Multiple-view layout
+
+## Create plots
+
+* A histogram plot
+
+```{r, echo=FALSE}
+print(histogram_plot)
+```
+
+* A scatter plot
+
+```{r, echo=FALSE}
+print(scatter)
+```
+
+* A box plot
+
+```{r, echo=FALSE}
+print(box_plot)
+```
+
+```{r, echo=FALSE}
+grid_arrange <- grid.arrange(histogram_plot, scatter, box_plot, ncol = 3)
+print(grid_arrange)
+```
