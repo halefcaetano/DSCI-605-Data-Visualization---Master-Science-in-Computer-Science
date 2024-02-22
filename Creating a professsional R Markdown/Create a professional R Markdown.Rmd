@@ -1,0 +1,47 @@
+---
+title: "The basic R Markdown"
+author: "Halef Caetano"
+date: "1/10/2024"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data description
+* Variable 1: salaries
+* Variable 2: new_salaries 
+* Variable 3: wide
+
+
+# Data wrangling
+* Step1: Install and load required packages
+* Step2: Load the dataset
+* Step3: Select columns of “rank”, “discipline”, “sex”, “salary”
+* Step4: Filter the rows where “salary” is not missing value
+* Step5: Group based on the required columns (“rank”,”discipline”, “sex”) and have the tally count of the rows
+* Step6: Reshape the table from long to wide: using spread() to transfer the “sex” column to many more columns
+based on the values in “sex”
+* Step7: Reshape the table from wide to long: using gather() to combined multiple “sex” related columns( in
+previous step6’s result) to one column “sex”
+
+```{r, results=FALSE}
+install.packages("tidyverse")
+library(tidyverse)
+library(readr)
+Salaries <- read_csv("Module2/Salaries.csv")
+View(Salaries)
+new_salaries <- Salaries %>% select(rank, discipline, sex, salary) %>%
+  filter(!is.na(salary)) 
+group <- new_salaries %>% group_by(rank, discipline, sex) %>% 
+  count() 
+print(group)
+wide <- group %>% spread(key = sex, value = n, fill = FALSE)   
+final <- wide %>% gather(key = "sex", value = "n", -rank, na.rm = TRUE) %>% 
+  separate(rank, into = "rank", sep = "_") 
+print(final)
+```
+
