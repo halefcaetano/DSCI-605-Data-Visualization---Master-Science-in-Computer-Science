@@ -1,0 +1,155 @@
+---
+title: "Final Project"
+author: "Halef Caetano"
+date: "1/23/2024"
+output: html_document
+---
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, error=FALSE, cache=TRUE}
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+library(tidyverse)
+library(sf)
+library(maps)  
+library(plotly)
+library(ggplot2)
+library(ggmap)
+library(ggspatial)
+
+crime_and_incarceration_by_state <- read.csv("data/crime_and_incarceration_by_state.csv")
+unemployment_county <- read.csv("data/unemployment_county.csv")
+state_polygons <- st_read("data/tl_2019_us_state/tl_2019_us_state.shp")
+
+
+# crime_and_incarceration_by_state
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  filter(!(jurisdiction %in% c("ALASKA", "HAWAII", "FEDERAL")))
+
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  rename(STUSPS = jurisdiction)
+
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  rename(Year = year)
+
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  filter(Year >= 2007 & Year <= 2014)
+
+state_abbreviations <- state.abb
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  mutate(STUSPS = tolower(STUSPS),
+         STUSPS = state_abbreviations[match(STUSPS, tolower(state.name))])
+
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  mutate(crime_rate = property_crime_total / state_population)
+
+crime_and_incarceration_by_state <- crime_and_incarceration_by_state %>%
+  select(STUSPS, Year, crime_rate)
+head(crime_and_incarceration_by_state)
+
+# unemployment_county
+unemployment_county <- unemployment_county %>%
+  rename(STUSPS = State)
+
+# Step 2: Remove rows for ALASKA, HAWAII, FEDERAL
+unemployment_county <- unemployment_county %>%
+  filter(STUSPS %in% c("AL", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"))
+
+# Step 3: Filter years: 2007-2014
+unemployment_county <- unemployment_county %>%
+  filter(Year >= 2007, Year <= 2014)
+
+unemployment_county <- unemployment_county %>%
+  group_by(STUSPS, Year) %>%
+  summarize(Avg_Unemployment_Rate = mean(Unemployment.Rate, na.rm = TRUE))
+
+
+
+print(unemployment_county)
+
+# state_polygons
+state_polygons <- state_polygons %>%
+  filter(!(STUSPS %in% c("AK", "AS", "MP", "PR", "VI", "HI", "GU")))
+
+state_polygons <- select(state_polygons, REGION, STUSPS, geometry)
+
+str(state_polygons)
+
+##########
+combined_data <- right_join(state_polygons, unemployment_county, by = "STUSPS") %>%
+  right_join(., crime_and_incarceration_by_state, by = c("STUSPS", "Year"))
+
+combined_data <- combined_data %>%
+  select(REGION, STUSPS,Year, Avg_Unemployment_Rate, crime_rate, geometry)
+
+
+missing_values <- which(is.na(combined_data))
+print(missing_values)
+
+saveRDS(combined_data, "combined_dataset.rds")
+
+
+
+#######
+selected_states <- c("IL", "CA", "ID", "IN")
+
+time_series_data <- combined_data %>%
+  filter(STUSPS %in% selected_states)
+
+unemployment_plot <- plot_ly(
+  data = time_series_data,
+  x = ~Year,
+  y = ~Avg_Unemployment_Rate,
+  color = ~STUSPS) %>%
+  add_lines() %>% 
+  layout(title = "Unemployment Rate Over Time",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Average Unemployment Rate"))
+
+
+spatial_map <- ggplot() +
+  geom_sf(data = combined_data %>% filter(Year == 2014),
+          aes(fill = Avg_Unemployment_Rate),
+          color = "white",
+          size = 0.2) +
+  scale_fill_viridis_c() +
+  labs(title = "Unemployment Rate Spatial Map (2014)",
+       fill = "Average Unemployment Rate") +
+  ggsn::scalebar(data = combined_data, dist = 1000, dist_unit = "km", location = "bottomleft", transform = TRUE, model = "WGS84") +
+  ggspatial::annotation_north_arrow(location = "br", which_north = "true", style = north_arrow_fancy_orienteering) +
+  xlab("Longitude") + ylab("Latitude") +
+  theme_minimal()
+
+spatial_map_region_1 <- ggplot() +
+  geom_sf(data = combined_data %>% filter(Year == 2014, REGION == 1),  # Filter for Region 1
+          aes(fill = Avg_Unemployment_Rate),
+          color = "white",
+          size = 0.2) +
+  scale_fill_viridis_c() +
+  labs(title = "Unemployment Rate Spatial Map for Region 1 (2014)",
+       fill = "Average Unemployment Rate") +
+  ggsn::scalebar(data = combined_data, dist = 200, dist_unit = "km", location = "bottomleft", transform = TRUE, model = "WGS84") +
+  ggspatial::annotation_north_arrow(location = "br", which_north = "true", style = north_arrow_fancy_orienteering) +
+  xlab("Longitude") + ylab("Latitude") +
+  theme_minimal()
+
+scatter_plot <- plot_ly(
+  data = combined_data %>% filter(Year == 2014),
+  x = ~crime_rate,
+  y = ~Avg_Unemployment_Rate,
+  color = ~REGION) %>% 
+  add_markers(text = ~paste("State: ", STUSPS)) %>%
+  layout(title = "Scatter Plot for Unemployment Rate vs Crime Rate (2014)",
+         xaxis = list(title = "Crime Rate"),
+         yaxis = list(title = "Average Unemployment Rate"))
+
+
+spatial_map
+spatial_map_region_1
+scatter_plot
+unemployment_plot
+
+
+
+
+```
+
+
