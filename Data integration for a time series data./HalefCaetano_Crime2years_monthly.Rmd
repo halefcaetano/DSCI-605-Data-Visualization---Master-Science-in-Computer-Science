@@ -1,0 +1,18 @@
+---
+title: "Crime2years_monthly"
+author: "Halef Caetano"
+date: "1/16/2024"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(knitr)
+crime <- readRDS("Module10/Crime3years.rds")
+years <- crime %>% filter(Date %in% c(2018, 2019))
+monthly_data <- years %>% group_by(month = format(Date, "%Y-%m")) %>% summarise(total_crime = sum(Battery))
+saveRDS(monthly_data, "Crime2years_monthly.rds")
+kable(monthly_data)
+
+```
+
